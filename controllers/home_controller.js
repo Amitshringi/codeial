@@ -1,9 +1,34 @@
-        module.exports.home=function(req, res){
-                console.log(req.cookies);
-                res.cookie('user_id', 20);
-                return res.render('home',{
-                title :"Home"
-            });
+       const Post=require('../models/post');
+   
 
-            // return res.end('<h1>Express is up for Codeial</h1>');
-        };
+
+    module.exports.home = async function(req, res) {
+        try {
+          const posts = await Post.find({})
+            .populate({
+              path: 'user',
+              select: 'name email'
+            })
+            .populate({
+              path: 'comments',
+              populate: {
+                path: 'user',
+                select: 'name email'
+              }
+            });
+      
+          return res.render('home', {
+            title: 'Codeial | Home',
+            posts
+          });
+        } catch (err) {
+          console.error(err);
+          return res.status(500).send('Internal Server Error');
+        }
+      };
+      
+    
+    
+        
+          
+        
