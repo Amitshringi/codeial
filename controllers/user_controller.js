@@ -1,36 +1,53 @@
-const User=require('../models/user');
+// const User=require('../models/user');
+// const user=require('../models/user');
 
-// module.exports.profile= function(req, res){
-//     return res.render('user_profile', {
-//         title: 'User Profile'
-//     })
-//     // res.end('<h1>User Profile</h1>');
-    
-// }
 
-//show details of signed in user
-const user=require('../models/user');
-module.exports.profile = function(req, res) {
-    if(req.cookies.user_id) {
-        User.findById(req.cookies.user_id)
-            .then(function(user) {
-                if(user) {
-                    return res.render('user_Profile', {
-                        title: "user profile",
-                        user: user
-                    });
-                } else {
-                    return res.redirect('/users/sign-in');
-                }
-            })
-            .catch(function(err) {
-                console.log('error in finding user in profile:', err);
-                return res.redirect('/users/sign-in');
-            });
-    } else {
-        return res.redirect('/users/sign-in');
+
+
+const User = require('../models/user');
+
+module.exports.profile = async function(req, res) {
+  try {
+    const user = await User.findById(req.params.id).exec();
+    if (!user) {
+      return res.status(404).send('User not found');
     }
-}
+
+    return res.render('user_profile', {
+      title: 'User Profile',
+      profile_user: user
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send('Internal Server Error');
+  }
+};
+
+
+
+
+// show details of signed in user
+// module.exports.profile = function(req, res) {
+//     if(req.cookies.user_id) {
+//         User.findById(req.cookies.user_id)
+//             .then(function(user) {
+//                 if(user) {
+//                     return res.render('user_Profile', {
+//                         title: "user profile",
+//                         user: user
+//                     });
+//                 } else {
+//                     return res.redirect('/users/sign-in');
+//                 }
+//             })
+//             .catch(function(err) {
+//                 console.log('error in finding user in profile:', err);
+//                 return res.redirect('/users/sign-in');
+//             });
+//     } else {
+//         return res.redirect('/users/sign-in');
+//     }
+// }
 
 //render the Sign Up Page
 module.exports.signUp=function(req, res){
@@ -105,6 +122,26 @@ module.exports.createSession=function(req, res){
         });
     }
     
+
+    
+
+module.exports.update = async function(req, res) {
+  try {
+    if (req.user.id == req.params.id) {
+      const user = await User.findByIdAndUpdate(req.params.id, req.body).exec();
+      if (!user) {
+        return res.status(404).send('User not found');
+      }
+      return res.redirect('back');
+    } else {
+      return res.status(401).send('Unauthorized');
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send('Internal Server Error');
+  }
+};
+
 
 
 
