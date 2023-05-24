@@ -1,10 +1,13 @@
 // const User=require('../models/user');
 // const user=require('../models/user');
+const fs= require('fs');
+const path=require('path');
 
 
 
 
 const User = require('../models/user');
+const { findById } = require('../models/user');
 
 module.exports.profile = async function(req, res) {
   try {
@@ -107,6 +110,7 @@ module.exports.create = function(req, res){
 
 // Sign in and create a session for the user
 module.exports.createSession=function(req, res){
+  req.flash('success', 'Logged in successfully');
     return res.redirect('/');
 }
 
@@ -114,6 +118,7 @@ module.exports.createSession=function(req, res){
 
     module.exports.destroySession = function(req, res) {
         req.logout(function(err) {
+          req.flash('success', 'you have logged out!');
             if(err) {
                 console.log('Error in destroying session:', err);
                 return;
@@ -125,22 +130,61 @@ module.exports.createSession=function(req, res){
 
     
 
+    
+
+    
+   
+
+    
+    
+   
+
 module.exports.update = async function(req, res) {
-  try {
-    if (req.user.id == req.params.id) {
-      const user = await User.findByIdAndUpdate(req.params.id, req.body).exec();
-      if (!user) {
-        return res.status(404).send('User not found');
-      }
+  if (req.user.id == req.params.id) {
+    try {
+      let user = await User.findById(req.params.id);
+
+      User.uploadedAvatar(req, res, function(err) {
+        if (err) {
+          console.log('*****multerError', err);
+        }
+
+        user.name = req.body.name;
+        user.email = req.body.email;
+
+        if (req.file) {
+          if (user.avatar) {
+            fs.unlinkSync(path.join(__dirname, '..', user.avatar));
+          }
+          // Save the path of the uploaded file into the avatar field of the user
+          user.avatar = User.avatarPath + '/' + req.file.filename;
+        }
+
+        user.save()
+          .then(() => {
+            return res.redirect('back');
+          })
+          .catch((err) => {
+            req.flash('error', err.message);
+            return res.redirect('back');
+          });
+      });
+    } catch (err) {
+      req.flash('error', err.message);
       return res.redirect('back');
-    } else {
-      return res.status(401).send('Unauthorized');
     }
-  } catch (err) {
-    console.error(err);
-    return res.status(500).send('Internal Server Error');
+  } else {
+    req.flash('error', 'Unauthorized!');
+    return res.status(401).send('Unauthorized');
   }
 };
+
+    
+    
+
+    
+    
+
 
 
 
